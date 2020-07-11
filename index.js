@@ -2,11 +2,23 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const ObjectId = require('mongoose').Types.ObjectId;
+const multer  = require('multer')
+const uniqueString  = require('unique-string')
 
 const app = express();
 app.use(bodyParser.json({extended: true}));
 mongoose.connect('mongodb://localhost:27017/books', {useNewUrlParser: true, useUnifiedTopology: true});
 mongoose.set('useFindAndModify', false);
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, __dirname + '/covers')
+    },
+    filename: function (req, file, cb) {
+        cb(null, uniqueString() + '.png')
+    }
+})
+const upload = multer({ storage: storage })
 
 const bookSchema = new mongoose.Schema({
     type: String,
@@ -80,8 +92,9 @@ mapBookForUpdate = function(book) {
     }
 }
 
-app.post('/books', function(req, res){
-    const book = new Book(req.body);
+app.post('/books', upload.single('cover'), function (req, res, next) {
+    const book = new Book(JSON.parse(req.body.book));
+    book.coverUrl = 'api/books/cover/' + req.file.filename;
     book.save().then(() => res.status(200).end()).catch(()=> res.send("error"));
 });
 
@@ -91,6 +104,10 @@ app.put('/books/:bookId', async function(req, res) {
         if (err) return res.send(err);
         res.status(200).end();
     })
+});
+
+app.get('/books/cover/:coverId', function(req, res){
+    res.sendFile(__dirname + '/covers/' + req.params.coverId);
 });
 
 app.listen(3001, function() {
