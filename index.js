@@ -57,13 +57,13 @@ app.get('/books', function(req, res){
 
 app.get('/filter-books', function(req, res){
     console.log('xxx');
-    console.log(req.query.recommendation);
-    console.log(typeof req.query.recommendation);
+    console.log(req.query.marked);
+    console.log(req.query.marked.indexOf('false'));
     const conditions = {
         recommendation: {$in: getArrayOf(req.query.recommendation)},
-        // state: {$in: getArrayOf(req.query.state)},
-        // starred: {$in: getArrayOf(req.query.starred)},
-        // type: {$in: getArrayOf(req.query.type)},
+        state: {$in: getArrayOf(req.query.state)},
+        starred: {$in: getArrayOf(req.query.marked)},
+        type: {$in: getArrayOf(req.query.type)},
     }
     Book.find(conditions, function (err, books) {
         if (err) return console.error(err);
