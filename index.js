@@ -91,7 +91,6 @@ app.get('/books/:bookId', function(req, res){
 });
 
 mapBookForReturn = function(book) {
-    console.log(book.readings.sort((r, s) => -r.date.localeCompare(s.date)));
     return {
         id: book._id,
         type: book.type, recommendation: book.recommendation, state: book.state, starred: book.starred,
@@ -111,6 +110,7 @@ mapBookForReturn = function(book) {
 }
 
 mapBookForUpdate = function(book) {
+    book.tags.sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()));
     return {
         type: book.type, recommendation: book.recommendation, state: book.state, starred: book.starred,
         rootTitle: book.rootTitle, title: book.title,
@@ -129,6 +129,7 @@ mapBookForUpdate = function(book) {
 app.post('/books', upload.single('cover'), function (req, res, next) {
     const book = new Book(JSON.parse(req.body.book));
     book.coverUrl = 'api/books/cover/' + req.file.filename;
+    book.tags.sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()));
     book.save().then(() => res.status(200).end()).catch(()=> res.send("error"));
 });
 
