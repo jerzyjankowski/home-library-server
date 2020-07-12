@@ -103,14 +103,11 @@ mapBookForReturn = function(book) {
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
         note: book.note,
         description: book.description,
-        readings: book.readings
-            .map(reading => new Object({date: reading.date, note: reading.note}))
-            .sort((r, s) => -r.date.localeCompare(s.date))
+        readings: book.readings.map(reading => new Object({date: reading.date, note: reading.note}))
     }
 }
 
 mapBookForUpdate = function(book) {
-    book.tags.sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()));
     return {
         type: book.type, recommendation: book.recommendation, state: book.state, starred: book.starred,
         rootTitle: book.rootTitle, title: book.title,
@@ -118,11 +115,11 @@ mapBookForUpdate = function(book) {
         coverUrl: book.coverUrl,
         edition: book.edition, publisher: book.publisher, publishedYear: book.publishedYear, pagesNumber: book.pagesNumber,
         category: book.category, subCategory: book.subCategory,
-        tags: book.tags,
+        tags: book.tags.sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase())),
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
         note: book.note,
         description: book.description,
-        readings: book.readings
+        readings: book.readings.sort((r, s) => r.date.localeCompare(s.date))
     }
 }
 
@@ -130,6 +127,7 @@ app.post('/books', upload.single('cover'), function (req, res, next) {
     const book = new Book(JSON.parse(req.body.book));
     book.coverUrl = 'api/books/cover/' + req.file.filename;
     book.tags.sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()));
+    book.readings.sort((r, s) => r.date.localeCompare(s.date));
     book.save().then(() => res.status(200).end()).catch(()=> res.send("error"));
 });
 
