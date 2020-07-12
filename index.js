@@ -115,7 +115,7 @@ mapBookForUpdate = function(book) {
         coverUrl: book.coverUrl,
         edition: book.edition, publisher: book.publisher, publishedYear: book.publishedYear, pagesNumber: book.pagesNumber,
         category: book.category, subCategory: book.subCategory,
-        tags: book.tags.sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase())),
+        tags: book.tags,
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
         note: book.note,
         description: book.description,
@@ -126,14 +126,14 @@ mapBookForUpdate = function(book) {
 app.post('/books', upload.single('cover'), function (req, res, next) {
     const book = new Book(JSON.parse(req.body.book));
     book.coverUrl = 'api/books/cover/' + req.file.filename;
-    book.tags.sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()));
+    fillBookTagsWithCategoryAndSubcategoryAndSort(book);
     book.readings.sort((r, s) => r.date.localeCompare(s.date));
     book.save().then(() => res.status(200).end()).catch(()=> res.send("error"));
 });
 
 app.put('/books/:bookId', upload.single('cover'), async function(req, res, next) {
     const bookToUpdate = mapBookForUpdate(new Book(JSON.parse(req.body.book)));
-    console.log(bookToUpdate);
+    fillBookTagsWithCategoryAndSubcategoryAndSort(bookToUpdate);
     if (req.file) {
         removeCoverOfBook(req.params.bookId)
         bookToUpdate.coverUrl = 'api/books/cover/' + req.file.filename;
@@ -143,6 +143,20 @@ app.put('/books/:bookId', upload.single('cover'), async function(req, res, next)
         res.status(200).end();
     })
 });
+
+fillBookTagsWithCategoryAndSubcategoryAndSort = function(book) {
+    if (!book.tags) {
+        book.tags = [];
+    }
+    if (book.category && book.tags.indexOf(book.category) === -1) {
+        book.tags.push(book.category)
+    }
+    if (book.category && book.tags.indexOf(book.subCategory) === -1) {
+        book.tags.push(book.subCategory)
+    }
+
+    book.tags.sort((x, y) => x.toLowerCase().localeCompare(y.toLowerCase()))
+}
 
 removeCoverOfBook = async function(bookId) {
     await Book.findById(req.params.bookId, function (err, bookOld) {
