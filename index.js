@@ -56,14 +56,15 @@ app.get('/books', function(req, res){
 });
 
 app.get('/filter-books', function(req, res){
-    console.log('xxx');
-    console.log(req.query.marked);
-    console.log(req.query.marked.indexOf('false'));
     const conditions = {
+        title: { "$regex": req.query.title, "$options": "i" },
         recommendation: {$in: getArrayOf(req.query.recommendation)},
         state: {$in: getArrayOf(req.query.state)},
         starred: {$in: getArrayOf(req.query.marked)},
         type: {$in: getArrayOf(req.query.type)},
+    }
+    if (req.query.tags) {
+        conditions.tags = { $all: req.query.tags }
     }
     Book.find(conditions, function (err, books) {
         if (err) return console.error(err);
