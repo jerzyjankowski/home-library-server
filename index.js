@@ -44,9 +44,13 @@ const bookSchema = new mongoose.Schema({
     sources: [{name: String, location: String}],
 
     note: String,
-    description: String
+    description: String,
+
+    readings: [{date: String, note: String}]
 });
 const Book = mongoose.model('Book', bookSchema);
+
+
 
 app.get('/books', function(req, res){
     Book.find(function (err, books) {
@@ -87,6 +91,7 @@ app.get('/books/:bookId', function(req, res){
 });
 
 mapBookForReturn = function(book) {
+    console.log(book.readings.sort((r, s) => -r.date.localeCompare(s.date)));
     return {
         id: book._id,
         type: book.type, recommendation: book.recommendation, state: book.state, starred: book.starred,
@@ -98,7 +103,10 @@ mapBookForReturn = function(book) {
         tags: book.tags,
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
         note: book.note,
-        description: book.description
+        description: book.description,
+        readings: book.readings
+            .map(reading => new Object({date: reading.date, note: reading.note}))
+            .sort((r, s) => -r.date.localeCompare(s.date))
     }
 }
 
@@ -113,7 +121,8 @@ mapBookForUpdate = function(book) {
         tags: book.tags,
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
         note: book.note,
-        description: book.description
+        description: book.description,
+        readings: book.readings
     }
 }
 
