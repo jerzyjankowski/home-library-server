@@ -18,7 +18,7 @@ app.use(bodyParser.json({extended: true}));
 mongoose.connect(`mongodb://localhost:27017/books-${env}`, {useNewUrlParser: true, useUnifiedTopology: true});
 mongoose.set('useFindAndModify', false);
 
-const caseInsensitiveComparator = (x, y) => x.toLowerCase().localeCompare(y.toLowerCase());
+const caseInsensitiveComparator = (x, y) => !x ? -1 : !y ? 1 : x.toLowerCase().localeCompare(y.toLowerCase());
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -264,18 +264,18 @@ app.put('/books', function(req, res) {
     Book.find({}, function (err, books) {
         if (err) return console.error(err);
         books.forEach(book => {
-            if (adminUpdate1 | adminUpdate2) {
-                console.log(book.edition);
-                book.save().then(() => res.status(200).end()).catch(()=> {});
-            }
+            // if (adminUpdate1(book) | adminUpdate2(book) | adminUpdate3(book)) {
+            //     console.log(book.edition);
+            //     book.save().then(() => res.status(200).end()).catch(()=> {});
+            // }
         });
         res.send('finished');
     });
 });
 adminUpdate1 = function(book) {
     if (book.subCategory !== null && book.subCategory !== undefined) {
-        book.subcategory = book.subcategory;
-        book.subcategory = undefined;
+        book.subcategory = book.subCategory;
+        book.subCategory = undefined;
         return true;
     }
     return false;
@@ -287,6 +287,10 @@ adminUpdate2 = function(book) {
         return true;
     }
     return false;
+}
+adminUpdate3 = function(book) {
+    book.subcategory = 'Angular';
+    return true;
 }
 
 app.listen(port, function() {
