@@ -87,7 +87,12 @@ app.get('/filter-books', function(req, res){
     Book.find(conditions, function (err, books) {
         if (err) return console.error(err);
     }).sort({'attributesSortString': 1, 'publishedYear': -1, 'title': 1}).then((books) => {
-        res.send(books.map(mapBookForReturn));
+        const pageSize = 10;
+        const maxPage = Math.ceil(books.length / pageSize);
+        const page = req.query.page;
+        const currentPage = page > maxPage ? 1 : page;
+        const startBook = (currentPage - 1) * pageSize;
+        res.send({ books: books.slice(startBook, startBook + pageSize).map(mapBookForReturn), currentPage: currentPage, maxPage: maxPage });
     });
 });
 
