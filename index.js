@@ -6,16 +6,23 @@ const multer  = require('multer')
 const uniqueString  = require('unique-string')
 const fs  = require('fs')
 
+const env = process.argv && process.argv.length >= 4
+    && process.argv.indexOf('--env') !== -1 && process.argv.length > process.argv.indexOf('--env') + 1
+    ? process.argv[process.argv.indexOf('--env') + 1] : 'garbage';
+const port = process.argv && process.argv.length >= 4
+    && process.argv.indexOf('--port') !== -1 && process.argv.length > process.argv.indexOf('--port') + 1
+    ? +process.argv[process.argv.indexOf('--port') + 1] : 3001;
+
 const app = express();
 app.use(bodyParser.json({extended: true}));
-mongoose.connect('mongodb://localhost:27017/books', {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(`mongodb://localhost:27017/books-${env}`, {useNewUrlParser: true, useUnifiedTopology: true});
 mongoose.set('useFindAndModify', false);
 
 const caseInsensitiveComparator = (x, y) => x.toLowerCase().localeCompare(y.toLowerCase());
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, __dirname + '/covers')
+        cb(null, __dirname + `/covers-${env}`)
     },
     filename: function (req, file, cb) {
         cb(null, uniqueString() + '.png')
@@ -55,6 +62,7 @@ const Book = mongoose.model('Book', bookSchema);
 
 
 
+
 app.get('/books', function(req, res){
     Book.find(function (err, books) {
         if (err) return console.error(err);
@@ -77,7 +85,7 @@ app.get('/filter-books', function(req, res){
     Book.find(conditions, function (err, books) {
         if (err) return console.error(err);
         res.send(books.map(mapBookForReturn));
-    })
+    });
 });
 
 getArrayOf = function(queryParams) {
@@ -129,7 +137,7 @@ mapBookForUpdate = function(book) {
 
 app.post('/books', upload.single('cover'), function (req, res, next) {
     const book = new Book(JSON.parse(req.body.book));
-    book.coverUrl = 'api/books/cover/' + req.file.filename;
+    book.coverUrl = req.file && req.file.filename ? `api/books/cover/` + req.file.filename : null;
     fillBookTagsWithCategoryAndSubcategoryAndSort(book);
     book.readings.sort((r, s) => r.date.localeCompare(s.date));
     book.save().then(() => res.status(200).end()).catch(()=> res.send("error"));
@@ -163,7 +171,7 @@ fillBookTagsWithCategoryAndSubcategoryAndSort = function(book) {
 }
 
 removeCoverOfBook = async function(bookId) {
-    await Book.findById(req.params.bookId, function (err, bookOld) {
+    await Book.findById(bookId, function (err, bookOld) {
         if (err) return console.error(err);
         if (bookOld.coverUrl) {
             fs.unlinkSync(__dirname + '/covers/' + bookOld.coverUrl.split('/')[3]);
@@ -172,7 +180,7 @@ removeCoverOfBook = async function(bookId) {
 }
 
 app.get('/books/cover/:coverId', function(req, res){
-    res.sendFile(__dirname + '/covers/' + req.params.coverId);
+    res.sendFile(`${__dirname}/covers-${env}/${req.params.coverId}`);
 });
 
 app.get('/tags', function(req, res) {
@@ -198,7 +206,7 @@ const preconfiguredAvailableSubcategories = {
     'Frontend': ['Angular', 'AngularJS', 'Bootstrap', 'HTML and CSS', 'JavaScript', 'jQuery', 'MeteorJS', 'ReactJS', 'TypeScript', 'Vue.js', 'WebGL', 'Wordpress'],
     'Mobile': ['Android', 'Hybrid Mobile', 'Objective-C', 'Swift', 'Xamarin'],
     'Data': ['Data Science', 'DBs', 'ElasticSearch', 'MongoDB', 'MySQL', 'MariaDB', 'PostgreSQL'],
-    'DevOps': ['Clouds', 'Console', 'DevOps', 'Git', 'Linux', 'Maven', 'Microservices', 'Network', 'PowerShell', 'Security'],
+    'DevOps': ['Clouds', 'Console', 'DevOps', 'Git', 'Gradle', 'Linux', 'Maven', 'Microservices', 'Network', 'PowerShell', 'Security'],
     'IoT': ['Arduino', 'IoT', 'Raspberry Pi'],
     'Other': [ 'Axure UX', 'Blender', 'Games', 'Jira', 'LaTeX', 'OpenCV', 'Other', 'PM', 'Spark', 'Testing', 'Unity', 'Unreal Engine', 'UX Design']
 };
@@ -238,6 +246,6 @@ app.get('/book-lists', function(req, res) {
     });
 })
 
-app.listen(3001, function() {
-    console.log("server has started on port 3001");
+app.listen(port, function() {
+    console.log(`server has started on port ${port} on ${env} environment`);
 });
