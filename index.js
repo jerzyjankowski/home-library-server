@@ -35,7 +35,7 @@ const bookSchema = new mongoose.Schema({
 
     recommendation: String,
     state: String,
-    starred: Boolean,
+    marked: Boolean,
     archived: Boolean,
 
     rootTitle: String,
@@ -77,7 +77,7 @@ app.get('/filter-books', function(req, res){
         title: { "$regex": req.query.title, "$options": "i" },
         recommendation: {$in: getArrayOf(req.query.recommendation)},
         state: {$in: getArrayOf(req.query.state)},
-        starred: {$in: getArrayOf(req.query.marked)},
+        marked: {$in: getArrayOf(req.query.marked)},
         archived: {$in: getArrayOf(req.query.archived)},
         type: {$in: getArrayOf(req.query.type)},
     }
@@ -113,7 +113,7 @@ app.get('/books/:bookId', function(req, res){
 mapBookForReturn = function(book) {
     return {
         id: book._id,
-        type: book.type, recommendation: book.recommendation, state: book.state, starred: book.starred, archived: book.archived,
+        type: book.type, recommendation: book.recommendation, state: book.state, marked: book.marked, archived: book.archived,
         rootTitle: book.rootTitle, title: book.title,
         authors: book.authors,
         coverUrl: book.coverUrl,
@@ -129,11 +129,11 @@ mapBookForReturn = function(book) {
 
 mapBookForUpdate = function(book) {
     const attributesSortString = `${book.archived ? '1' : '0'}`
-        + `${book.starred ? '0' : '1'}`
+        + `${book.marked ? '0' : '1'}`
         + `${book.state === 'current' ? '0' : book.state === 'paused' ? '1' : book.state === 'finished' ? '2' : '3'}`
         + `${book.recommendation === 'recommended' ? '0' : book.recommendation === 'notRecommended' ? '2' : '1'}`;
     return {
-        type: book.type, recommendation: book.recommendation, state: book.state, starred: book.starred, archived: book.archived,
+        type: book.type, recommendation: book.recommendation, state: book.state, marked: book.marked, archived: book.archived,
         rootTitle: book.rootTitle, title: book.title,
         authors: book.authors,
         coverUrl: book.coverUrl,
@@ -260,20 +260,34 @@ app.get('/book-lists', function(req, res) {
 })
 
 // admin update all
-// app.put('/books', function(req, res) {
-//     Book.find({}, function (err, books) {
-//         if (err) return console.error(err);
-//         books.forEach(book => {
-//             if (book.subcategory) {
-//                 console.log(book.edition);
-//                 book.subcategory = undefined;
-//                 book.subcategory = book.subcategory;
-//                 book.save().then(() => res.status(200).end()).catch(()=> {});
-//             }
-//         });
-//         res.send('updated');
-//     });
-// });
+app.put('/books', function(req, res) {
+    Book.find({}, function (err, books) {
+        if (err) return console.error(err);
+        books.forEach(book => {
+            if (adminUpdate1 | adminUpdate2) {
+                console.log(book.edition);
+                book.save().then(() => res.status(200).end()).catch(()=> {});
+            }
+        });
+        res.send('finished');
+    });
+});
+adminUpdate1 = function(book) {
+    if (book.subCategory !== null && book.subCategory !== undefined) {
+        book.subcategory = book.subcategory;
+        book.subcategory = undefined;
+        return true;
+    }
+    return false;
+}
+adminUpdate2 = function(book) {
+    if (book.starred !== null && book.starred !== undefined) {
+        book.marked = book.starred;
+        book.starred = undefined;
+        return true;
+    }
+    return false;
+}
 
 app.listen(port, function() {
     console.log(`server has started on port ${port} on ${env} environment`);
