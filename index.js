@@ -84,6 +84,7 @@ app.get('/filter-books', function(req, res){
     }
     Book.find(conditions, function (err, books) {
         if (err) return console.error(err);
+    }).sort({'publishedYear': -1, 'title': 1}).then((books) => {
         res.send(books.map(mapBookForReturn));
     });
 });
