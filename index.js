@@ -56,7 +56,9 @@ const bookSchema = new mongoose.Schema({
     note: String,
     description: String,
 
-    readings: [{date: String, note: String}]
+    readings: [{date: String, note: String}],
+
+    attributesSortString: String
 });
 const Book = mongoose.model('Book', bookSchema);
 
@@ -84,7 +86,7 @@ app.get('/filter-books', function(req, res){
     }
     Book.find(conditions, function (err, books) {
         if (err) return console.error(err);
-    }).sort({'publishedYear': -1, 'title': 1}).then((books) => {
+    }).sort({'attributesSortString': 1, 'publishedYear': -1, 'title': 1}).then((books) => {
         res.send(books.map(mapBookForReturn));
     });
 });
@@ -121,6 +123,10 @@ mapBookForReturn = function(book) {
 }
 
 mapBookForUpdate = function(book) {
+    const attributesSortString = `${book.archived ? '1' : '0'}`
+        + `${book.starred ? '0' : '1'}`
+        + `${book.state === 'current' ? '0' : book.state === 'paused' ? '1' : book.state === 'finished' ? '2' : '3'}`
+        + `${book.recommendation === 'recommended' ? '0' : book.recommendation === 'notRecommended' ? '2' : '1'}`;
     return {
         type: book.type, recommendation: book.recommendation, state: book.state, starred: book.starred, archived: book.archived,
         rootTitle: book.rootTitle, title: book.title,
@@ -132,7 +138,8 @@ mapBookForUpdate = function(book) {
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
         note: book.note,
         description: book.description,
-        readings: book.readings.sort((r, s) => r.date.localeCompare(s.date))
+        readings: book.readings.sort((r, s) => r.date.localeCompare(s.date)),
+        attributesSortString: attributesSortString
     }
 }
 
