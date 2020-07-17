@@ -48,7 +48,7 @@ const bookSchema = new mongoose.Schema({
     pagesNumber: Number,
 
     category: String,
-    subCategory: String,
+    subcategory: String,
     tags: [String],
 
     sources: [{name: String, location: String}],
@@ -118,7 +118,7 @@ mapBookForReturn = function(book) {
         authors: book.authors,
         coverUrl: book.coverUrl,
         edition: book.edition, publisher: book.publisher, publishedYear: book.publishedYear, pagesNumber: book.pagesNumber,
-        category: book.category, subCategory: book.subCategory,
+        category: book.category, subcategory: book.subcategory,
         tags: book.tags,
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
         note: book.note,
@@ -138,7 +138,7 @@ mapBookForUpdate = function(book) {
         authors: book.authors,
         coverUrl: book.coverUrl,
         edition: book.edition, publisher: book.publisher, publishedYear: book.publishedYear, pagesNumber: book.pagesNumber,
-        category: book.category, subCategory: book.subCategory,
+        category: book.category, subcategory: book.subcategory,
         tags: book.tags,
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
         note: book.note,
@@ -176,8 +176,8 @@ fillBookTagsWithCategoryAndSubcategoryAndSort = function(book) {
     if (book.category && book.tags.indexOf(book.category) === -1) {
         book.tags.push(book.category)
     }
-    if (book.category && book.tags.indexOf(book.subCategory) === -1) {
-        book.tags.push(book.subCategory)
+    if (book.category && book.tags.indexOf(book.subcategory) === -1) {
+        book.tags.push(book.subcategory)
     }
 
     book.tags.sort(caseInsensitiveComparator)
@@ -226,7 +226,7 @@ const preconfiguredAvailableSubcategories = {
 app.get('/book-lists', function(req, res) {
     const preconfiguredSubCategories = {};
     preconfiguredAvailableCategories.forEach(category => preconfiguredSubCategories[category] = new Set([...preconfiguredAvailableSubcategories[category]]));
-    Book.find({}, 'tags publisher sources category subCategory', function(err, books) {
+    Book.find({}, 'tags publisher sources category subcategory', function(err, books) {
         if (err) return console.error(err);
         const sets = books.reduce(
             (available, book) => {
@@ -234,9 +234,9 @@ app.get('/book-lists', function(req, res) {
                 book.sources.forEach(source => available.sourceNames.add(source.name));
                 if (!available.categories.has(book.category)) {
                     available.categories.add(book.category);
-                    available.subCategories[book.category] = new Set();
+                    available.subcategories[book.category] = new Set();
                 }
-                available.subCategories[book.category].add(book.subCategory);
+                available.subcategories[book.category].add(book.subcategory);
                 book.tags.forEach(available.tags.add, available.tags);
                 return available;
             },
@@ -244,20 +244,36 @@ app.get('/book-lists', function(req, res) {
                 publishers: new Set(),
                 sourceNames: new Set(),
                 categories: new Set(preconfiguredAvailableCategories),
-                subCategories: preconfiguredSubCategories,
+                subcategories: preconfiguredSubCategories,
                 tags: new Set(preconfiguredTags)
             }
         )
-        sets.categories.forEach(category => sets.subCategories[category] = [...sets.subCategories[category]].sort())
+        sets.categories.forEach(category => sets.subcategories[category] = [...sets.subcategories[category]].sort())
         res.send({
             publishers: [...sets.publishers].sort(caseInsensitiveComparator),
             sourceNames: [...sets.sourceNames].sort(caseInsensitiveComparator),
             categories: [...sets.categories].sort(caseInsensitiveComparator),
-            subCategories: sets.subCategories,
+            subcategories: sets.subcategories,
             tags: [...sets.tags].sort(caseInsensitiveComparator),
         });
     });
 })
+
+// admin update all
+// app.put('/books', function(req, res) {
+//     Book.find({}, function (err, books) {
+//         if (err) return console.error(err);
+//         books.forEach(book => {
+//             if (book.subcategory) {
+//                 console.log(book.edition);
+//                 book.subcategory = undefined;
+//                 book.subcategory = book.subcategory;
+//                 book.save().then(() => res.status(200).end()).catch(()=> {});
+//             }
+//         });
+//         res.send('updated');
+//     });
+// });
 
 app.listen(port, function() {
     console.log(`server has started on port ${port} on ${env} environment`);
