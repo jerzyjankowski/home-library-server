@@ -1,3 +1,4 @@
+
 {
   "name": "home-library-server",
   "version": "1.0.0",
@@ -5,8 +6,13 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js -- --env dev",
-    "start-prod": "nodemon index.js -- --env prod --port 3001"
+    "start-prod": "nodemon index.js -- --env prod --port 3001",
+    "dump-dev": "mongodump --db=books-dev --out=D:/ROOT/WS_preparation/homelibrary/back-up/dev/%date%/db && xcopy covers-dev \"D:/ROOT/WS_preparation/homelibrary/back-up/prod/%date%/covers\" /y /i",
+    "dump-prod": "mongodump --db=books-prod --out=D:/ROOT/WS_preparation/homelibrary/back-up/prod/%date%/db && xcopy covers-prod \"D:/ROOT/WS_preparation/homelibrary/back-up/prod/%date%/covers\" /y /i"
   },
+  "dev-info": [
+    "to restore from dump: > mongorestore [address to D:/ROOT/WS_preparation/homelibrary/back-up/books-prod/18.07.2020/db]"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
