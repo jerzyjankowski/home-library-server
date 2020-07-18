@@ -275,6 +275,34 @@ app.get('/book-lists', function(req, res) {
         });
     });
 })
+
+
+
+app.get('/history', function(req, res){
+    Book.find({readings: { $exists: true, $ne: []}}, {id: 1, title: 1, readings: 1}, function (err, books) {
+        if (err) return console.error(err);
+        const readings = books.reduce((r, book) => {
+            return r.concat(book.readings.map(reading => {return {bookId: book._id, bookTitle: book.title, date: reading.date, note: reading.note}}));
+        }, []);
+        readings.sort((r1, r2) => r2.date.localeCompare(r1.date));
+        res.send(readings);
+    })
+    //     .sort({'attributesSortString': 1, 'publishedYear': -1, 'title': 1}).then((books) => {
+    //     const pageSize = 10;
+    //     const maxPage = Math.ceil(books.length / pageSize);
+    //     const page = req.query.page;
+    //     const currentPage = page > maxPage ? 1 : page;
+    //     const startBook = (currentPage - 1) * pageSize;
+    //     res.send({ books: books.slice(startBook, startBook + pageSize).map(mapBookForReturn), currentPage: currentPage, maxPage: maxPage });
+    // });
+});
+
+
+
+
+
+
+
 //////////////////////
 // admin update all //
 //////////////////////
