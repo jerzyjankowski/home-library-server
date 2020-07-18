@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 
 const bookSchema = new mongoose.Schema({
-    type: String,
+    media: String,
 
     recommendation: String,
     state: String,
@@ -80,7 +80,7 @@ app.get('/filter-books', function(req, res){
         state: {$in: getArrayOf(req.query.state)},
         marked: {$in: getArrayOf(req.query.marked)},
         archived: {$in: getArrayOf(req.query.archived)},
-        type: {$in: getArrayOf(req.query.type)},
+        media: {$in: getArrayOf(req.query.media)},
     }
     if (req.query.tags) {
         conditions.tags = { $all: req.query.tags }
@@ -135,7 +135,7 @@ app.get('/books/:bookId', function(req, res){
 mapBookForReturn = function(book) {
     return {
         id: book._id,
-        type: book.type, recommendation: book.recommendation, state: book.state, marked: book.marked, archived: book.archived,
+        media: book.media, recommendation: book.recommendation, state: book.state, marked: book.marked, archived: book.archived,
         rootTitle: book.rootTitle, title: book.title,
         authors: book.authors,
         coverUrl: book.coverUrl,
@@ -155,7 +155,7 @@ mapBookForUpdate = function(book) {
         + `${book.state === 'current' ? '0' : book.state === 'paused' ? '1' : book.state === 'finished' ? '2' : '3'}`
         + `${book.recommendation === 'recommended' ? '0' : book.recommendation === 'notRecommended' ? '2' : '1'}`;
     return {
-        type: book.type, recommendation: book.recommendation, state: book.state, marked: book.marked, archived: book.archived,
+        media: book.media, recommendation: book.recommendation, state: book.state, marked: book.marked, archived: book.archived,
         rootTitle: book.rootTitle, title: book.title,
         authors: book.authors,
         coverUrl: book.coverUrl,
@@ -328,7 +328,7 @@ app.get('/history', function(req, res){
 //     Book.find({}, function (err, books) {
 //         if (err) return console.error(err);
 //         books.forEach(book => {
-//             if (adminUpdate5(book)) {
+//             if (adminUpdate6(book)) {
 //                 console.log(book.edition);
 //                 book.save().then(() => res.status(200).end()).catch(()=> {});
 //             }
@@ -377,6 +377,18 @@ adminUpdate5 = function(book) {
     if (book.createdAt === undefined) {
         const createdAt = `${d.getFullYear()}-${d.getMonth() < 9 ? '0' : ''}${d.getMonth() + 1}-${d.getDate() < 10 ? '0' : ''}${d.getDate()}`
         book.createdAt = createdAt;
+        return true;
+    }
+    return false;
+}
+adminUpdate6 = function(book) {
+    if (book.media === null || book.media === undefined) {
+        book.media = 'ebook';
+        book.type = undefined;
+        return true;
+    }
+    if (book.description === 'null') {
+        book.description = '';
         return true;
     }
     return false;
