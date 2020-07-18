@@ -84,6 +84,9 @@ app.get('/filter-books', function(req, res){
     if (req.query.tags) {
         conditions.tags = { $all: req.query.tags }
     }
+    if (req.query.sourceName) {
+        conditions["sources.name"] = req.query.sourceName;
+    }
     Book.find(conditions, function (err, books) {
         if (err) return console.error(err);
     }).sort({'attributesSortString': 1, 'publishedYear': -1, 'title': 1}).then((books) => {
@@ -258,20 +261,31 @@ app.get('/book-lists', function(req, res) {
         });
     });
 })
-
-// admin update all
-app.put('/books', function(req, res) {
-    Book.find({}, function (err, books) {
-        if (err) return console.error(err);
-        books.forEach(book => {
-            // if (adminUpdate1(book) | adminUpdate2(book) | adminUpdate3(book)) {
-            //     console.log(book.edition);
-            //     book.save().then(() => res.status(200).end()).catch(()=> {});
-            // }
-        });
-        res.send('finished');
-    });
-});
+//////////////////////
+// admin update all //
+//////////////////////
+// app.put('/books', function(req, res) {
+//     Book.find({}, function (err, books) {
+//         if (err) return console.error(err);
+//         books.forEach(book => {
+//             if (adminUpdate4(book)) {
+//                 console.log(book.edition);
+//                 book.save().then(() => res.status(200).end()).catch(()=> {});
+//             }
+//         });
+//         res.send('finished');
+//     });
+// });
+adminUpdate0 = function(book) {
+    if (book.attributesSortString === null || book.attributesSortString === undefined) {
+        book.attributesSortString = `${book.archived ? '1' : '0'}`
+            + `${book.marked ? '0' : '1'}`
+            + `${book.state === 'current' ? '0' : book.state === 'paused' ? '1' : book.state === 'finished' ? '2' : '3'}`
+            + `${book.recommendation === 'recommended' ? '0' : book.recommendation === 'notRecommended' ? '2' : '1'}`;
+        return true;
+    }
+    return false;
+}
 adminUpdate1 = function(book) {
     if (book.subCategory !== null && book.subCategory !== undefined) {
         book.subcategory = book.subCategory;
@@ -290,6 +304,10 @@ adminUpdate2 = function(book) {
 }
 adminUpdate3 = function(book) {
     book.subcategory = 'Angular';
+    return true;
+}
+adminUpdate4 = function(book) {
+    book.marked = false;
     return true;
 }
 
