@@ -58,7 +58,8 @@ const bookSchema = new mongoose.Schema({
 
     readings: [{date: String, note: String}],
 
-    attributesSortString: String
+    createdAt: String,
+    attributesSortString: String,
 });
 const Book = mongoose.model('Book', bookSchema);
 
@@ -151,11 +152,23 @@ mapBookForUpdate = function(book) {
     }
 }
 
+mapBookForCreate = function(book) {
+    const d = new Date();
+    const createdAt = `${d.getFullYear()}-${d.getMonth() < 9 ? '0' : ''}${d.getMonth()+1}-${d.getDate() < 10 ? '0' : ''}${d.getDate()}`
+    const attributesSortString = `${book.archived ? '1' : '0'}`
+        + `${book.marked ? '0' : '1'}`
+        + `${book.state === 'current' ? '0' : book.state === 'paused' ? '1' : book.state === 'finished' ? '2' : '3'}`
+        + `${book.recommendation === 'recommended' ? '0' : book.recommendation === 'notRecommended' ? '2' : '1'}`;
+    book.readings.sort((r, s) => r.date.localeCompare(s.date));
+    book.createdAt = createdAt;
+    book.attributesSortString = attributesSortString;
+    return book;
+}
+
 app.post('/books', upload.single('cover'), function (req, res, next) {
-    const book = new Book(JSON.parse(req.body.book));
+    const book = mapBookForCreate(new Book(JSON.parse(req.body.book)));
     book.coverUrl = req.file && req.file.filename ? `api/books/cover/` + req.file.filename : null;
     fillBookTagsWithCategoryAndSubcategoryAndSort(book);
-    book.readings.sort((r, s) => r.date.localeCompare(s.date));
     book.save().then(() => res.status(200).end()).catch(()=> res.send("error"));
 });
 
@@ -199,6 +212,7 @@ app.get('/books/cover/:coverId', function(req, res){
     res.sendFile(`${__dirname}/covers-${env}/${req.params.coverId}`);
 });
 
+// unused, to delete
 app.get('/tags', function(req, res) {
     Book.find({}, 'tags', function(err, books) {
         if (err) return console.error(err);
@@ -268,7 +282,7 @@ app.get('/book-lists', function(req, res) {
 //     Book.find({}, function (err, books) {
 //         if (err) return console.error(err);
 //         books.forEach(book => {
-//             if (adminUpdate4(book)) {
+//             if (adminUpdate5(book)) {
 //                 console.log(book.edition);
 //                 book.save().then(() => res.status(200).end()).catch(()=> {});
 //             }
@@ -307,8 +321,19 @@ adminUpdate3 = function(book) {
     return true;
 }
 adminUpdate4 = function(book) {
-    book.marked = false;
+    if (book.marked === null || book.marked === undefined) {
+        book.marked = false;
+    }
     return true;
+}
+adminUpdate5 = function(book) {
+    const d = new Date();
+    if (book.createdAt === undefined) {
+        const createdAt = `${d.getFullYear()}-${d.getMonth() < 9 ? '0' : ''}${d.getMonth() + 1}-${d.getDate() < 10 ? '0' : ''}${d.getDate()}`
+        book.createdAt = createdAt;
+        return true;
+    }
+    return false;
 }
 
 app.listen(port, function() {
