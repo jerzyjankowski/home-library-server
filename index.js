@@ -100,6 +100,24 @@ app.get('/filter-books', function(req, res){
     });
 });
 
+app.get('/matched-books', function(req, res){
+    if (!req.query.title && !req.query.authors) {
+        res.send([]);
+    }
+    const conditions = [];
+    if (req.query.title) {
+        conditions.push({title: {"$regex": req.query.title.split(/\W+/).splice(0, 4).join('.+'), "$options": "i"}});
+    }
+    if (req.query.authors) {
+        conditions.push({authors: {"$regex": req.query.authors.split(/\W+/).splice(0, 2).join('.+'), "$options": "i"}});
+    }
+    Book.find({$or: conditions}, function (err, books) {
+        if (err) return console.error(err);
+    }).limit(11).then((books) => {
+        res.send(books.map(mapBookForReturn));
+    });
+});
+
 getArrayOf = function(queryParams) {
     if (queryParams === null || queryParams === undefined) {
         return [];
