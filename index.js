@@ -265,11 +265,11 @@ const preconfiguredTags = ['Android', 'Angular', 'AngularJS', 'Arduino', 'Axure 
     'Bootstrap', 'C', 'C#', 'C++', 'Clouds', 'Console', 'Data', 'Data Science', 'DBs', 'DevOps', 'Django',
     '.NET', 'ElasticSearch', 'Flask', 'Frontend', 'Games', 'Git', 'Go', 'Groovy', 'HTML and CSS', 'Hybrid Mobile',
     'IoT', 'Java', 'JavaFX', 'JavaScript', 'Jira', 'jQuery', 'LaTeX', 'Linux', 'MariaDB', 'Maven', 'MeteorJS',
-    'Microservices', 'Mobile', 'MongoDB', 'MySQL', 'Network', 'Node.js', 'Objective-C', 'OpenCV', 'Other', 'PHP', 'PM',
+    'Microservices', 'Mobile', 'MongoDB', 'MySQL', 'Network', 'Node.js', 'Objective-C', 'OpenCV', 'Other IT', 'PHP', 'PM',
     'PostgreSQL', 'PowerShell', 'Python', 'R', 'Rails', 'Raspberry Pi', 'ReactJS', 'Ruby', 'Scala', 'Security', 'Spark',
     'Spring', 'Swift', 'Testing', 'TypeScript', 'Unity', 'Unreal Engine', 'UX Design', 'Vue.js', 'WebGL', 'Wordpress',
     'Xamarin'];
-const preconfiguredAvailableCategories = ['Backend', 'Frontend', 'Mobile', 'Data', 'DevOps', 'IoT', 'Other'];
+const preconfiguredAvailableCategories = ['Backend', 'Frontend', 'Mobile', 'Data', 'DevOps', 'IoT', 'Other IT'];
 const preconfiguredAvailableSubcategories = {
     'Backend': ['C', 'C#', 'C++', 'Django', '.NET', 'Flask', 'Go', 'Groovy', 'Java', 'JavaFX', 'Node.js', 'PHP', 'Python', 'R', 'Rails', 'Ruby', 'Scala', 'Spring'],
     'Frontend': ['Angular', 'AngularJS', 'Bootstrap', 'HTML and CSS', 'JavaScript', 'jQuery', 'MeteorJS', 'ReactJS', 'TypeScript', 'Vue.js', 'WebGL', 'Wordpress'],
@@ -277,7 +277,7 @@ const preconfiguredAvailableSubcategories = {
     'Data': ['Data Science', 'DBs', 'ElasticSearch', 'MongoDB', 'MySQL', 'MariaDB', 'PostgreSQL'],
     'DevOps': ['Clouds', 'Console', 'DevOps', 'Git', 'Gradle', 'Linux', 'Maven', 'Microservices', 'Network', 'PowerShell', 'Security'],
     'IoT': ['Arduino', 'IoT', 'Raspberry Pi'],
-    'Other': [ 'Axure UX', 'Blender', 'Games', 'Jira', 'LaTeX', 'OpenCV', 'Other', 'PM', 'Spark', 'Testing', 'Unity', 'Unreal Engine', 'UX Design']
+    'Other IT': [ 'Axure UX', 'Blender', 'Games', 'IT for kids', 'Jira', 'LaTeX', 'OpenCV', 'Other', 'PM', 'Spark', 'Testing', 'Unity', 'Unreal Engine', 'UX Design']
 };
 app.get('/book-lists', function(req, res) {
     const preconfiguredSubCategories = {};
