@@ -59,6 +59,7 @@ const bookSchema = new mongoose.Schema({
     readings: [{date: String, note: String}],
 
     createdAt: String,
+    updatedAt: String,
     attributesSortString: String,
 });
 const Book = mongoose.model('Book', bookSchema);
@@ -88,9 +89,17 @@ app.get('/filter-books', function(req, res){
     if (req.query.sourceName) {
         conditions["sources.name"] = req.query.sourceName;
     }
+    const sort = {};
+    if (req.query.sort && req.query.order) {
+        console.log('filter-books', req.query.sort, req.query.order)
+        sort[req.query.sort] = req.query.order === 'asc' ? 1 : -1;
+    }
+    sort.attributesSortString = 1;
+    sort.publishedYear = -1;
+    sort.title = 1;
     Book.find(conditions, function (err, books) {
         if (err) return console.error(err);
-    }).sort({'attributesSortString': 1, 'publishedYear': -1, 'title': 1}).then((books) => {
+    }).sort(sort).then((books) => {
         const pageSize = 10;
         const maxPage = Math.ceil(books.length / pageSize);
         const page = req.query.page;
@@ -103,6 +112,7 @@ app.get('/filter-books', function(req, res){
 app.get('/matched-books', function(req, res){
     if (!req.query.title && !req.query.authors) {
         res.send([]);
+        return
     }
     const conditions = [];
     if (req.query.title) {
@@ -150,10 +160,7 @@ mapBookForReturn = function(book) {
 }
 
 mapBookForUpdate = function(book) {
-    const attributesSortString = `${book.archived ? '1' : '0'}`
-        + `${book.marked ? '0' : '1'}`
-        + `${book.state === 'current' ? '0' : book.state === 'paused' ? '1' : book.state === 'finished' ? '2' : '3'}`
-        + `${book.recommendation === 'recommended' ? '0' : book.recommendation === 'notRecommended' ? '2' : '1'}`;
+    const attributesSortString = getAttributesSortString(book);
     return {
         media: book.media, recommendation: book.recommendation, state: book.state, marked: book.marked, archived: book.archived,
         rootTitle: book.rootTitle, title: book.title,
@@ -166,21 +173,30 @@ mapBookForUpdate = function(book) {
         note: book.note,
         description: book.description,
         readings: book.readings.sort((r, s) => r.date.localeCompare(s.date)),
-        attributesSortString: attributesSortString
+        attributesSortString: attributesSortString,
+        updatedAt: getFormattedDate()
     }
 }
 
-mapBookForCreate = function(book) {
-    const d = new Date();
-    const createdAt = `${d.getFullYear()}-${d.getMonth() < 9 ? '0' : ''}${d.getMonth()+1}-${d.getDate() < 10 ? '0' : ''}${d.getDate()}`
-    const attributesSortString = `${book.archived ? '1' : '0'}`
+getAttributesSortString = function(book) {
+    return `${book.archived ? '1' : '0'}`
         + `${book.marked ? '0' : '1'}`
         + `${book.state === 'current' ? '0' : book.state === 'paused' ? '1' : book.state === 'finished' ? '2' : '3'}`
-        + `${book.recommendation === 'recommended' ? '0' : book.recommendation === 'notRecommended' ? '2' : '1'}`;
+        + `${book.recommendation === 'recommended' ? '0' : book.recommendation === 'notRecommended' ? '2' : '1'}`
+}
+
+mapBookForCreate = function(book) {
+    const createdAt = getFormattedDate();
+    const attributesSortString = getAttributesSortString(book);
     book.readings.sort((r, s) => r.date.localeCompare(s.date));
     book.createdAt = createdAt;
     book.attributesSortString = attributesSortString;
     return book;
+}
+
+getFormattedDate = function() {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth() < 9 ? '0' : ''}${d.getMonth()+1}-${d.getDate() < 10 ? '0' : ''}${d.getDate()}`;
 }
 
 app.post('/books', upload.single('cover'), function (req, res, next) {
@@ -241,7 +257,7 @@ app.get('/tags', function(req, res) {
 })
 
 const preconfiguredTags = ['Android', 'Angular', 'AngularJS', 'Arduino', 'Axure UX', 'Backend', 'Backend', 'Blender',
-    'Bootstrap', 'C lang', 'C#', 'C++', 'Clouds', 'Console', 'Data', 'Data Science', 'DBs', 'DevOps', 'Django',
+    'Bootstrap', 'C', 'C#', 'C++', 'Clouds', 'Console', 'Data', 'Data Science', 'DBs', 'DevOps', 'Django',
     '.NET', 'ElasticSearch', 'Flask', 'Frontend', 'Games', 'Git', 'Go', 'Groovy', 'HTML and CSS', 'Hybrid Mobile',
     'IoT', 'Java', 'JavaFX', 'JavaScript', 'Jira', 'jQuery', 'LaTeX', 'Linux', 'MariaDB', 'Maven', 'MeteorJS',
     'Microservices', 'Mobile', 'MongoDB', 'MySQL', 'Network', 'Node.js', 'Objective-C', 'OpenCV', 'Other', 'PHP', 'PM',
@@ -250,7 +266,7 @@ const preconfiguredTags = ['Android', 'Angular', 'AngularJS', 'Arduino', 'Axure 
     'Xamarin'];
 const preconfiguredAvailableCategories = ['Backend', 'Frontend', 'Mobile', 'Data', 'DevOps', 'IoT', 'Other'];
 const preconfiguredAvailableSubcategories = {
-    'Backend': ['C lang', 'C#', 'C++', 'Django', '.NET', 'Flask', 'Go', 'Groovy', 'Java', 'JavaFX', 'Node.js', 'PHP', 'Python', 'R', 'Rails', 'Ruby', 'Scala', 'Spring'],
+    'Backend': ['C', 'C#', 'C++', 'Django', '.NET', 'Flask', 'Go', 'Groovy', 'Java', 'JavaFX', 'Node.js', 'PHP', 'Python', 'R', 'Rails', 'Ruby', 'Scala', 'Spring'],
     'Frontend': ['Angular', 'AngularJS', 'Bootstrap', 'HTML and CSS', 'JavaScript', 'jQuery', 'MeteorJS', 'ReactJS', 'TypeScript', 'Vue.js', 'WebGL', 'Wordpress'],
     'Mobile': ['Android', 'Hybrid Mobile', 'Objective-C', 'Swift', 'Xamarin'],
     'Data': ['Data Science', 'DBs', 'ElasticSearch', 'MongoDB', 'MySQL', 'MariaDB', 'PostgreSQL'],
@@ -338,10 +354,7 @@ app.get('/history', function(req, res){
 // });
 adminUpdate0 = function(book) {
     if (book.attributesSortString === null || book.attributesSortString === undefined) {
-        book.attributesSortString = `${book.archived ? '1' : '0'}`
-            + `${book.marked ? '0' : '1'}`
-            + `${book.state === 'current' ? '0' : book.state === 'paused' ? '1' : book.state === 'finished' ? '2' : '3'}`
-            + `${book.recommendation === 'recommended' ? '0' : book.recommendation === 'notRecommended' ? '2' : '1'}`;
+        book.attributesSortString = getAttributesSortString(book);
         return true;
     }
     return false;
@@ -373,9 +386,8 @@ adminUpdate4 = function(book) {
     return true;
 }
 adminUpdate5 = function(book) {
-    const d = new Date();
     if (book.createdAt === undefined) {
-        const createdAt = `${d.getFullYear()}-${d.getMonth() < 9 ? '0' : ''}${d.getMonth() + 1}-${d.getDate() < 10 ? '0' : ''}${d.getDate()}`
+        const createdAt = getFormattedDate();
         book.createdAt = createdAt;
         return true;
     }
