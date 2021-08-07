@@ -60,6 +60,7 @@ const bookSchema = new mongoose.Schema({
 
     createdAt: String,
     updatedAt: String,
+    lastReadAt: String,
     attributesSortString: String,
 });
 const Book = mongoose.model('Book', bookSchema);
@@ -91,7 +92,6 @@ app.get('/filter-books', function(req, res){
     }
     const sort = {};
     if (req.query.sort && req.query.order) {
-        console.log('filter-books', req.query.sort, req.query.order)
         sort[req.query.sort] = req.query.order === 'asc' ? 1 : -1;
     }
     sort.attributesSortString = 1;
@@ -153,6 +153,9 @@ mapBookForReturn = function(book) {
         category: book.category, subcategory: book.subcategory,
         tags: book.tags,
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
+        createdAt: book.createdAt,
+        updatedAt: book.updatedAt,
+        lastReadAt: book.lastReadAt,
         note: book.note,
         description: book.description,
         readings: book.readings.map(reading => new Object({date: reading.date, note: reading.note}))
@@ -161,6 +164,7 @@ mapBookForReturn = function(book) {
 
 mapBookForUpdate = function(book) {
     const attributesSortString = getAttributesSortString(book);
+    const readingsSorted = book.readings.sort((r, s) => r.date.localeCompare(s.date))
     return {
         media: book.media, recommendation: book.recommendation, state: book.state, marked: book.marked, archived: book.archived,
         rootTitle: book.rootTitle, title: book.title,
@@ -172,9 +176,10 @@ mapBookForUpdate = function(book) {
         sources: book.sources ? book.sources.map(source => new Object({name: source.name, location: source.location})) : [],
         note: book.note,
         description: book.description,
-        readings: book.readings.sort((r, s) => r.date.localeCompare(s.date)),
+        readings: readingsSorted,
         attributesSortString: attributesSortString,
-        updatedAt: getFormattedDate()
+        updatedAt: getFormattedDate(),
+        lastReadAt: readingsSorted.length > 0 ? readingsSorted[readingsSorted.length - 1].date : '',
     }
 }
 
