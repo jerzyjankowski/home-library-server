@@ -56,7 +56,7 @@ const bookSchema = new mongoose.Schema({
     note: String,
     description: String,
 
-    readings: [{date: String, note: String}],
+    readings: [{date: String, time: Number, note: String}],
 
     createdAt: String,
     updatedAt: String,
@@ -158,7 +158,7 @@ mapBookForReturn = function(book) {
         lastReadAt: book.lastReadAt,
         note: book.note,
         description: book.description,
-        readings: book.readings.map(reading => new Object({date: reading.date, note: reading.note}))
+        readings: book.readings.map(reading => new Object({date: reading.date, time: reading.time, note: reading.note}))
     }
 }
 
